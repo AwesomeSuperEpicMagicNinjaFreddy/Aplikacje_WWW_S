@@ -12,6 +12,61 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+## Program.cs
+#using Kolokwium;
+#using Microsoft.EntityFrameworkCore;
+
+#var builder = WebApplication.CreateBuilder(args);
+
+#var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+#builder.Services.AddDbContext<MyDbContext>(options => options.UseSqlServer(connectionString));
+
+#builder.Services.AddControllersWithViews();
+
+
+
+#var app = builder.Build();
+
+#app.UseStaticFiles();
+#app.UseRouting();
+#app.UseHttpsRedirection();
+#app.MapDefaultControllerRoute();
+
+#// app.MapGet("/", () => "Hello World!");
+#app.Run();
+
+
+## MyDbContext.cs
+
+#public class MyDbContext : DbContext
+#    {
+#        public MyDbContext(DbContextOptions options) : base(options) { }
+#        public DbSet<Article> Articles { get; set; }
+#        public DbSet<Author> Authors { get; set; }
+#        public DbSet<Category> Categories { get; set; }
+#        public DbSet<Comment> Comments { get; set; }
+#        public DbSet<Tag> Tags { get; set; }
+#
+#        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#        {
+#            base.OnConfiguring(optionsBuilder);
+#        }
+#
+#        protected override void OnModelCreating(ModelBuilder modelBuilder)
+#        {
+#           modelBuilder.Entity<Match>()
+#			.HasOne(m => m.HomeTeam)
+#			.WithMany(t => t.HomeMatches)
+#			.HasForeignKey(m => m.HomeTeamId)
+#			.OnDelete(DeleteBehavior.NoAction);
+#			modelBuilder.Entity<Match>()
+#			.HasOne(m => m.AwayTeam)
+#			.WithMany(t => t.AwayMatches)
+#			.HasForeignKey(m => m.AwayTeamId)
+#			.OnDelete(DeleteBehavior.NoAction);
+#        }
+#    }
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
