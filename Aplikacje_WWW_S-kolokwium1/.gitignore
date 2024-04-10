@@ -67,6 +67,460 @@
 #        }
 #    }
 
+## Normal controller
+
+# public class AuthorController : Controller
+#     {
+#         private readonly MyDbContext _context;
+
+#         public AuthorController(MyDbContext context)
+#         {
+#             _context = context;
+#         }
+
+#         public IActionResult Index()
+#         {
+#             List<Author> authors = _context.Authors.ToList();
+
+#             ViewBag.Title = "Authors";
+#             return View(authors);
+#         }
+
+#         public IActionResult Add()
+#         {
+#             return View();
+#         }
+
+#         [HttpPost]
+#         public IActionResult Add(Author author)
+#         {
+#             _context.Authors.Add(author);
+#             _context.SaveChanges();
+
+#             //return RedirectToAction("Index");
+#             return View("Added", author);
+#         }
+
+#         public IActionResult Edit(int id)
+#         {
+#             var author = _context.Authors.FirstOrDefault(x => x.Id == id);
+#             if (author == null)
+#             {
+#                 return View("Error");
+#             }
+#             return View(author);
+#         }
+#         [HttpPost]
+#         public IActionResult Edit(Author author)
+#         {
+#             _context.Authors.Update(author);
+#             _context.SaveChanges();
+
+#             return RedirectToAction("Index");
+#         }
+#         public IActionResult Delete(int id)
+#         {
+#             var author = _context.Authors.FirstOrDefault(x => x.Id == id);
+#             if (author != null)
+#             {
+#                 _context.Authors.Remove(author);
+
+#             }
+#             _context.SaveChanges();
+#             return RedirectToAction("Index");
+#         }
+#         public IActionResult Details(int id)
+#         {
+#             var author = _context.Authors.FirstOrDefault(x => x.Id == id);
+#             return View(author);
+#         }
+#     }
+
+## BIg controller
+
+# public class ArticleController : Controller
+#     {
+#         private readonly MyDbContext _context;
+#         public ArticleController(MyDbContext context)
+#         {
+#             _context = context;
+#         }
+
+#         public IActionResult Index()
+#         {
+#             var articles = _context.Articles
+#                 .Include(a => a.Author)
+#                 .Include(a => a.Category)
+#                 .Include(a => a.Tags)
+#                 .ToList();
+#             return View(articles);
+#         }
+#         public IActionResult Add()
+#         {
+#             ViewData["AuthorId"] = new SelectList(_context.Authors, "Id", "FirstName");
+#             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
+
+#             ViewBag.tagsList = _context.Tags.Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToList();
+
+#             return View();
+#         }
+#         [HttpPost]
+#         public IActionResult Add(Article article, List<int> tags)
+#         {
+
+#             var articleTags = _context.Tags.Where(t => tags.Contains(t.Id)).ToList();
+#             article.Tags = articleTags;
+
+#             _context.Add(article);
+#             _context.SaveChanges();
+
+#             article.Tags = new List<Tag>();
+#             ViewData["AuthorId"] = new SelectList(_context.Authors, "Id", "FirstName", article.AuthorId);
+#             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", article.CategoryId);
+
+#             return RedirectToAction("Index");
+#         }
+#         public IActionResult Delete(int id)
+#         {
+#             var article = _context.Articles.FirstOrDefault(x => x.Id == id);
+
+#             if (article != null)
+#                 _context.Articles.Remove(article);
+#             _context.SaveChanges();
+
+#             return RedirectToAction("Index");
+#         }
+
+# public IActionResult Edit(int? id)
+# 		{
+# 			if (id == null)
+# 			{
+# 				return NotFound();
+# 			}
+
+# 			ViewBag.authorsList = new SelectList(_context.Authors, "Id", "FirstName");
+# 			ViewBag.categoriesList = new SelectList(_context.Categories, "Id", "Name");
+# 			ViewBag.allTags = _context.Tags.ToList();
+
+# 			var article = _context.Articles
+# 			    .Include(a => a.Tags) // Załaduj pozycje za pomocą Eager Loading
+# 			    .FirstOrDefault(a => a.Id == id);
+
+# 			return View(article);
+# 		}
+
+#         [HttpPost]
+#         public IActionResult Edit(Article article, List<int> selectedTags)
+#         {
+
+#             var articleToUpdate = _context.Articles
+#                 .Include(a => a.Tags)
+#                 .FirstOrDefault(a => a.Id == article.Id);
+
+#             if (articleToUpdate != null)
+#             {
+#                 articleToUpdate.Title = article.Title;
+#                 articleToUpdate.Lead = article.Lead;
+#                 articleToUpdate.Content = article.Content;
+#                 articleToUpdate.CreationDate = article.CreationDate;
+#                 articleToUpdate.AuthorId = article.AuthorId;
+#                 articleToUpdate.CategoryId = article.CategoryId;
+
+#                 articleToUpdate.Tags.Clear();
+#                 foreach (var tag in selectedTags)
+#                 {
+#                     var tagToAdd = _context.Tags.Find(tag);
+#                     if (tagToAdd != null)
+#                     {
+#                         articleToUpdate.Tags.Add(tagToAdd);
+#                     }
+#                 }
+
+#                 _context.SaveChanges();
+#             }
+
+#             var articles = _context.Articles
+#                 .Include(a => a.Author)
+#                 .Include(a => a.Category)
+#                 .Include(p => p.Tags);
+
+#             return View("Index", articles);
+#         }
+#     }
+
+## View add
+# @model Kolokwium.Models.Author;
+
+# <div class="text-center">
+#     <h1>Dodaj autora</h1>
+#     <form asp-controller="author" asp-action="add" method="post" class="w3-container">
+#         <p>
+#             <label asp-for="FirstName">Imie:</label>
+#             <input asp-for="FirstName" class="w3-input w3-border" />
+#         </p>
+#         <p>
+#             <label asp-for="LastName">Nazwisko:</label>
+#             <input asp-for="LastName" class="w3-input w3-border" />
+#         </p>
+#         <button type="submit" class="btn btn-primary">Dodaj</button>
+#     </form>
+#     <a asp-action="Added" class="primary-button small">Go Back</a>
+# </div>
+## View edit
+# @model Kolokwium.Models.Author;
+
+# <form asp-action="Edit" asp-controller="Author" method="post">
+#     @Html.HiddenFor(model => model.Id)
+
+#     <div class="form-element">
+#         <label asp-for="FirstName">Firstname:</label>
+#         <input type="text" asp-for="FirstName">
+#     </div>
+
+#     <div class="form-element">
+#         <label asp-for="LastName">Lastname:</label>
+#         <input type="text" asp-for="LastName">
+#     </div>
+
+#     <input type="submit" value="Edit" />
+# </form>
+# <a asp-action="Index" class="primary-button small">Go Back</a>
+
+## View index
+
+# @model IEnumerable<Kolokwium.Models.Author>;
+
+# @{
+#     ViewData["Title"] = "Lista Autorow";
+# }
+
+# <h2>@ViewData["Title"]</h2>
+# <td><a asp-action="Add" class="primary-button small">Add</a></td>
+
+# <table class="table">
+#     <thead>
+#         <tr>
+#             <th>FirstName</th>
+#             <th>LastName</th>
+#             <th>Edit</th>
+#             <th>Delete</th>
+#             <th>Details</th>
+
+#         </tr>
+#     </thead>
+#     <tbody>
+#         @foreach (var author in Model)
+#         {
+#             <tr>
+#                 <td>@author.FirstName</td>
+#                 <td>@author.LastName</td>
+#                 <td><a asp-action="Edit" asp-route-id="@author.Id" class="primary-button small">Edit</a></td>
+#                 <td><a asp-action="Delete" asp-route-id="@author.Id" class="primary-button small">Delete</a></td>
+#                 <td><a asp-action="Details" asp-route-id="@author.Id" class="primary-button small">Details</a></td>
+
+#             </tr>
+#         }
+#     </tbody>
+# </table>
+
+
+## big View Add
+
+# @model Kolokwium.Models.Article;
+
+# <div class="row">
+#     <div class="col-md-4">
+#         <form asp-action="Add">
+#             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+#             <div class="form-group">
+#                 <label asp-for="Title" class="control-label"></label>
+#                 <input asp-for="Title" class="form-control" />
+#                 <span asp-validation-for="Title" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="Lead" class="control-label"></label>
+#                 <input asp-for="Lead" class="form-control" />
+#                 <span asp-validation-for="Lead" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="Content" class="control-label"></label>
+#                 <input asp-for="Content" class="form-control" />
+#                 <span asp-validation-for="Content" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="CreationDate" class="control-label"></label>
+#                 <input asp-for="CreationDate" class="form-control" />
+#                 <span asp-validation-for="CreationDate" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="AuthorId" class="control-label"></label>
+#                 <select asp-for="AuthorId" class="form-control" asp-items="ViewBag.AuthorId"></select>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="CategoryId" class="control-label"></label>
+#                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+#             </div>
+
+#             @* @if (ViewBag.tagsList is List<SelectListItem> tagsList)
+#             {
+#             @foreach (var tag in tagsList)
+#             {
+#             <div>
+#             <input type="checkbox" name="tags" value="@tag.Value" id="tag_@tag.Value" @(Model != null && Model.Tags
+#             != null && Model.Tags.Any(p => p.Id.ToString() == tag.Value) ? "checked" : "") />
+#             <label for="tag_@tag.Value">@tag.Text</label>
+#             </div>
+#             }
+#             } *@
+
+#             @* Wersja 2 *@
+#             <div class="form-group">
+#                 <label class="control-label">Tags: </label>
+#                 <select name="selectedTagsIds" multiple="multiple" class="form-control"
+#                     asp-items="@ViewBag.tagsList"></select>
+#             </div>
+
+
+#             <div class="form-group">
+#                 <input type="submit" value="Create" class="btn btn-primary" />
+#             </div>
+#         </form>
+#     </div>
+# </div>
+
+
+## big View Edit
+
+# @model Kolokwium.Models.Article;
+
+# <div class="row">
+#     <div class="col-md-4">
+#         <form asp-action="Add">
+#             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+#             <div class="form-group">
+#                 <label asp-for="Title" class="control-label"></label>
+#                 <input asp-for="Title" class="form-control" />
+#                 <span asp-validation-for="Title" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="Lead" class="control-label"></label>
+#                 <input asp-for="Lead" class="form-control" />
+#                 <span asp-validation-for="Lead" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="Content" class="control-label"></label>
+#                 <input asp-for="Content" class="form-control" />
+#                 <span asp-validation-for="Content" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="CreationDate" class="control-label"></label>
+#                 <input asp-for="CreationDate" class="form-control" />
+#                 <span asp-validation-for="CreationDate" class="text-danger"></span>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="AuthorId" class="control-label"></label>
+#                 <select asp-for="AuthorId" class="form-control" asp-items="ViewBag.AuthorId"></select>
+#             </div>
+#             <div class="form-group">
+#                 <label asp-for="CategoryId" class="control-label"></label>
+#                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+#             </div>
+
+#             @if (ViewBag.tagsList is List<SelectListItem> tagsList)
+#             {
+#                 @foreach (var tag in tagsList)
+#                 {
+#                     <div>
+#                         <input type="checkbox" name="tags" value="@tag.Value" id="tag_@tag.Value" @(Model != null && Model.Tags
+#                     != null && Model.Tags.Any(p => p.Id.ToString() == tag.Value) ? "checked" : "") />
+#                         <label for="tag_@tag.Value">@tag.Text</label>
+#                     </div>
+#                 }
+#             }
+
+
+#             <div class="form-group">
+#                 <input type="submit" value="Create" class="btn btn-primary" />
+#             </div>
+#         </form>
+#     </div>
+# </div>
+
+
+## big View Index
+
+# @model IEnumerable<Kolokwium.Models.Article>;
+
+# <table class="table">
+#     <thead>
+#         <tr>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Title)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Lead)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Content)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.CreationDate)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Author)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Category)
+#             </th>
+#             <th>
+#                 @Html.DisplayNameFor(model => model.Tags)
+#             </th>
+#             <th></th>
+#         </tr>
+#     </thead>
+#     <tbody>
+#         @foreach (var item in Model)
+#         {
+#             <tr>
+#                 <td>
+#                     @Html.DisplayFor(modelItem => item.Title)
+#                 </td>
+#                 <td>
+#                     @Html.DisplayFor(modelItem => item.Lead)
+#                 </td>
+#                 <td>
+#                     @Html.DisplayFor(modelItem => item.Content)
+#                 </td>
+#                 <td>
+#                     @Html.DisplayFor(modelItem => item.CreationDate)
+#                 </td>
+#                 <td>
+#                     @item.Author.FirstName
+#                 </td>
+#                 <td>
+#                     @item.Category.Name
+#                 </td>
+#                 <td>
+#                     @if (item.Tags != null && item.Tags.Any())
+#                     {
+#                         @string.Join(", ", item.Tags.Select(tag => tag.Name))
+#                         ;
+#                     }
+#                     else
+#                     {
+#                         @:Brak tagow
+#                     }
+#                 </td>
+#                 <td>
+#                     <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+#                     <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+#                     <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+#                 </td>
+#             </tr>
+#         }
+#     </tbody>
+# </table>
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
